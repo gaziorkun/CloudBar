@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>bobo catering</title>
+  <style>
+    :root{ --bg:#0a1326; --card:#0f1b35; --muted:#a8b3cf; --fg:#ffffff; --accent:#7aa2ff; --accent2:#6ee7ff; --ok:#22c55e; --blue:#60a5fa; --warn:#f59e0b; --danger:#ef4444; --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.25) }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+    .wrap{max-width:960px;margin:0 auto;padding:12px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin:12px 0}
+    h1,h2{margin:8px 0 10px;color:#fff}
+    h1{font-size:22px}
+    h2{font-size:18px;color:var(--accent)}
+    label{display:block;margin:8px 0 4px;color:#c9d4f5;font-size:14px}
+    input,select,button{width:100%;padding:12px;border-radius:14px;border:1px solid #223057;background:#0c1731;color:var(--fg);font-size:14px}
+    button{cursor:pointer;border:0;font-weight:700}
+    button.ghost{background:#0c1731;color:var(--fg);border:1px solid #223057}
+    button.red{background:var(--danger);color:white}
+    button.green{background:var(--ok);color:black}
+    button.blue{background:var(--blue);color:#071016}
+    .row{display:flex;gap:10px;align-items:center}
+    .row>.col{flex:1}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0c1731;border:1px solid #223057;color:#c9d4f5;font-size:12px}
+    .muted{color:#c9d4f5}
+    .between{display:flex;justify-content:space-between;align-items:center}
+    .hidden{display:none}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+    .pbox{background:#0c1731;border:1px solid #223057;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .pname{font-weight:700}
+    .qtybar{display:flex;align-items:center;gap:8px}
+    .qtybar button{width:auto;padding:8px 12px}
+/* === Bigger, colorful +/- controls === */
+.qtybar { gap: 10px; }
+.qtybar button { font-size: 22px; padding: 14px 18px; border-radius: 14px; width:auto; }
+.qty { min-width: 56px; font-size: 18px; padding: 10px 12px; text-align:center; }
+.qtybar .minus { background: var(--danger) !important; color:#fff !important; border:0 !important; }
+.qtybar .plus  { background: var(--ok) !important; color:#04120a !important; border:0 !important; }
+
+    .qty{min-width:40px;text-align:center;background:#0a1326;border-radius:10px;border:1px solid #223057;padding:6px}
+    .warn{color:#fbbf24}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #223057;text-align:left}
+  
+/* === Mobile: disable double-tap zoom & text selection === */
+html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+* { user-select: none; -webkit-user-select: none; -ms-user-select: none; }
+input, textarea, select { user-select: text; -webkit-user-select: text; -ms-user-select: text; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- ÜSTTE ORTALI METİN BAŞLIK -->
+  <div class="card" style="text-align:center">
+    <h1 style="margin:0;letter-spacing:.5px;text-transform:lowercase">bobo franco</h1>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="view-login" class="card">
+    <h1 style="text-align:center">Satış Takip Uygulaması</h1>
+    <p class="muted">PIN ile giriş yapın (örn. 1111 / 1234)</p>
+    <div class="row">
+      <div class="col"><label>Kullanıcı</label><select id="login-user"></select></div>
+      <div class="col"><label>PIN</label><input id="login-pin" type="password" inputmode="numeric" maxlength="6" /></div>
+    </div>
+    <div class="row"><button id="btn-login" type="button" class="green">Giriş</button></div>
+    <p id="login-msg" class="muted" style="margin-top:8px"></p>
+  </div>
+
+  <!-- BAR SELECT -->
+  <div id="view-bars" class="card hidden">
+    <div class="between"><h1>Bar Seç</h1><div class="flex"><span id="whoami" class="pill"></span><button id="btn-admin" type="button" class="ghost hidden">Admin</button><button id="btn-logout" type="button" class="ghost">Çıkış</button></div></div>
+    <div id="bars-grid" class="grid"></div>
+    <div id="bars-ozet" class="card"><h2>Özet</h2><div id="bars-summary"></div></div>
+  </div>
+
+  <!-- POS GRID -->
+  <div id="view-pos" class="hidden">
+    <div class="card between">
+      <h1 id="pos-bar-name">Bar</h1>
+      <div><button id="btn-back" type="button" class="ghost">Barlar</button></div>
+    </div>
+    <div class="card">
+      <h2>Ürünler</h2>
+      <div id="prods-grid" class="grid"></div>
+      <div class="between" style="margin-top:12px"><div class="muted" id="crit-hint">Kritik stok: ⚠ ile işaretlenir</div><div><b id="sale-total">0</b> ₺</div></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btn-pay-cash" type="button" class="green">Nakit Satış</button>
+        <button id="btn-pay-card" type="button" class="blue">Kart Satış</button>
+        <button id="btn-clear" type="button" class="ghost">Sıfırla</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="between"><h2>Son Satışlar</h2><div class="muted" id="pos-totals"></div></div>
+      <div style="max-height:45vh;overflow:auto">
+        <table id="sales-table"><thead><tr id="sales-head-row"></tr></thead><tbody></tbody></table>
+      </div>
+      <p class="muted"><span class="warn">Silme yok:</span> Satış geri alınamaz.</p>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="view-admin" class="hidden">
+    <div class="card between"><h1>Admin</h1><div class="flex"><button id="btn-close-admin" type="button" class="ghost">Kapat</button></div></div>
+
+    <div class="card">
+      <h2>Barlar</h2>
+      <div class="row"><input id="bar-name" placeholder="Bar adı"/><button id="btn-add-bar" type="button" class="blue">Ekle</button></div>
+      <div id="bars-admin" class="grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>Ürünler</h2>
+      <div class="row"><div class="col"><input id="prod-name" placeholder="Ürün adı"/></div><div class="col"><input id="prod-price" type="number" placeholder="Fiyat (₺)"/></div></div>
+      <div class="row"><div class="col"><input id="prod-critical" type="number" placeholder="Kritik stok"/></div><div class="col"><button id="btn-add-prod" type="button" class="blue">Ekle/Güncelle</button></div></div>
+      <div id="prods-admin" class="grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>Stok Yönetimi</h2>
+      <div class="row"><div class="col"><label>Bar</label><select id="stk-bar"><option value="">(Hepsi)</option></select></div><div class="col"><label>Ürün</label><select id="stk-prod"></select></div></div>
+      <div class="row"><div class="col"><input id="stk-delta" type="number" placeholder="+/- miktar"/></div><div><button id="btn-stk" type="button" class="green">Uygula</button></div><div class="pill" id="stk-cur">Mevcut: –</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Kullanıcı Yönetimi</h2>
+      <div class="row"><div class="col"><input id="usr-name" placeholder="Kullanıcı adı"/></div><div class="col"><input id="usr-pin" inputmode="numeric" placeholder="PIN (örn. 1234)"/></div></div>
+      <div class="row"><div class="col"><select id="usr-role"><option value="user">user</option><option value="admin">admin</option></select></div><div class="col"><button id="btn-add-user" type="button" class="blue">Ekle</button></div></div>
+      <div id="users-admin" class="grid"></div>
+    </div>
+
+    
+    <div class="card" id="cloud-card">
+      <h2>Bulut Senkron (Canlı Paylaşım)</h2>
+      <p class="muted">Farklı telefonlarda aynı veriyi anlık olarak paylaşmak için Firebase kullanır.</p>
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px">
+        <div>
+          <label>Tenant / Mekan Kodu</label>
+          <input id="tenant-id" placeholder="örn. bobo-franco" />
+        </div>
+        <div>
+          <label>Durum</label>
+          <div id="cloud-status" class="pill">Kapalı</div>
+        </div>
+      </div>
+      <label>Firebase Config (JSON)</label>
+      <textarea id="fb-config" rows="6">{'apiKey': 'AIzaSyBR4c5Y4Aa-7blbfP7aVKYqPnNz1k0ih58', 'authDomain': 'bobo-catering.firebaseapp.com', 'projectId': 'bobo-catering', 'storageBucket': 'bobo-catering.firebasestorage.app', 'messagingSenderId': '183002410824', 'appId': '1:183002410824:web:e867eb636ef72f3b494d7d', 'measurementId': 'G-35WG4J7V6Q'}</textarea>
+      <p class="muted">İPUCU: Firebase bazen aşağıdaki gibi <em>kod</em> veriyor:<br><code>const firebaseConfig = { ... };</code><br>İstersen o kodu da buraya yapıştırabilirsin. Otomatik ayıklayacağım.</p>
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px">
+        <button id="btn-cloud-enable" type="button" class="green">Kaydet ve Etkinleştir</button>
+        <button id="btn-cloud-disable" type="button" class="red">Devre Dışı</button>
+      </div>
+      <p class="muted">Not: Config bilgisini sadece bir kez yapıştır; uygulama cihazında güvenli olarak saklanır.</p>
+    </div>
+
+    <div class="card">
+      <h2>Bakım</h2>
+      <button id="btn-reset-db" type="button" class="red">Verileri Sıfırla</button>
+      <p class="muted">Sadece admin: Tüm verileri demo başlangıcına döndürür.</p>
+    </div>
+
+    <!-- RAPORLAR VE Z RAPORU (EN ALTA) -->
+    <div class="card">
+      <h2>Raporlar</h2>
+      <div class="row"><div class="col"><label>Bar</label><select id="rpt-bar"></select></div><div class="col"><label>Kullanıcı</label><select id="rpt-user"></select></div></div>
+      <div class="row"><div class="col"><label>Başlangıç</label><input id="rpt-from" type="datetime-local"/></div><div class="col"><label>Bitiş</label><input id="rpt-to" type="datetime-local"/></div></div>
+      <div class="row"><button id="btn-rpt" type="button" class="green">Raporu Getir</button><div class="pill" id="rpt-summary">–</div></div>
+      <div style="max-height:45vh;overflow:auto"><table id="rpt-table"><thead><tr><th>Tarih/Saat</th><th>Bar</th><th>Ürün</th><th>Adet</th><th>Birim</th><th>Toplam</th><th>Ödeme</th><th>Kullanıcı</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+
+    <div class="card">
+      <h2>Ürün Satış Raporu</h2>
+      <div class="row">
+        <div class="col"><label>Bar</label><select id="pr-bar"><option value="">(Hepsi)</option></select></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Başlangıç</label><input id="pr-from" type="datetime-local"/></div>
+        <div class="col"><label>Bitiş</label><input id="pr-to" type="datetime-local"/></div>
+      </div>
+      <div class="row">
+        <button id="btn-pr" type="button" class="green">Raporu Getir</button>
+        <button id="btn-pr-csv" type="button" class="green">CSV</button>
+        <div class="pill" id="pr-summary">–</div>
+      </div>
+      <div style="max-height:45vh;overflow:auto">
+        <table id="pr-table"><thead><tr><th>Bar</th><th>Ürün</th><th>Adet</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Stok Yönetim Logu</h2>
+      <div class="row">
+        <div class="col"><label>Bar</label><select id="sl-bar"><option value="">(Hepsi)</option></select></div>
+        <div class="col"><label>Ürün</label><select id="sl-prod"><option value="">(Hepsi)</option></select></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Başlangıç</label><input id="sl-from" type="datetime-local"/></div>
+        <div class="col"><label>Bitiş</label><input id="sl-to" type="datetime-local"/></div>
+      </div>
+      <div class="row">
+        <button id="btn-sl" type="button" class="green">Raporu Getir</button>
+        <div class="pill" id="sl-summary">–</div>
+      </div>
+      <div style="max-height:45vh;overflow:auto">
+        <table id="sl-table"><thead><tr><th>Tarih/Saat</th><th>Bar</th><th>Ürün</th><th>Değişim</th><th>Kullanıcı</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Gün Sonu Z Raporu</h2>
+      <div class="row"><input id="z-date" type="date"/><button id="btn-z" type="button" class="green">Oluştur</button><button id="btn-z-csv" type="button" class="green">CSV</button></div>
+      <div style="max-height:45vh;overflow:auto"><table id="z-table"><thead><tr><th>Bar</th><th>Ciro</th><th>Nakit</th><th>Kart</th></tr></thead><tbody></tbody></table></div>
+      <div class="pill" id="z-summary">–</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='bf_adisyon_v62';
+const fmt=new Intl.NumberFormat('tr-TR');
+const store={load(){const raw=localStorage.getItem(KEY);if(!raw){const s=this.seed();localStorage.setItem(KEY,JSON.stringify(s));return s;}try{return JSON.parse(raw);}catch(e){return this.seed();}},save(db){localStorage.setItem(KEY,JSON.stringify(db));},seed(){return{users:[{name:'admin',pin:'1234',role:'admin'},{name:'barista',pin:'1111',role:'user'}],bars:[{id:id(),name:'Bar 1'},{id:id(),name:'Bar 2'}],products:[{id:id(),name:'Aperol Spritz',price:350,critical:5},{id:id(),name:'Negroni',price:420,critical:5},{id:id(),name:'Prosecco Kadeh',price:320,critical:10}],stock:{},sales:[]}}}
+function id(){return Math.random().toString(36).slice(2,10)}
+function ts(t){return new Date(t).toLocaleString('tr-TR')}
+let DB=store.load();
+if(!DB.stockLogs) DB.stockLogs=[];
+let SESSION={user:null,bar:null,cart:{}};
+
+// helpers
+function getBar(idv){return DB.bars.find(b=>b.id===idv)}
+function getProd(idv){return DB.products.find(p=>p.id===idv)}
+function stockGet(bar,prod){if(!DB.stock[bar]) DB.stock[bar]={}; if(DB.stock[bar][prod]==null) DB.stock[bar][prod]=0; return DB.stock[bar][prod];}
+function stockAdd(bar,prod,delta){if(!DB.stock[bar]) DB.stock[bar]={}; DB.stock[bar][prod]=(DB.stock[bar][prod]||0)+Number(delta); store.save(DB);} 
+
+// ---- Login ----
+const loginUser=document.getElementById('login-user');
+function refreshLoginUsers(){ loginUser.innerHTML=''; DB.users.forEach(u=>{const o=document.createElement('option'); o.value=u.name; o.textContent=`${u.name} (${u.role})`; loginUser.appendChild(o);}); }
+refreshLoginUsers();
+
+document.getElementById('btn-login').onclick=()=>{const name=loginUser.value; const pin=document.getElementById('login-pin').value.trim(); const u=DB.users.find(x=>x.name===name && x.pin===pin); const msg=document.getElementById('login-msg'); if(!u){msg.textContent='Hatalı PIN'; return;} SESSION.user={name:u.name,role:u.role}; msg.textContent=''; view('bars'); renderBars(); document.getElementById('whoami').textContent=`${u.name} (${u.role})`; document.getElementById('btn-admin').classList.toggle('hidden',u.role!=='admin'); }
+
+
+// Prevent gesture-based zoom and double-tap zoom on mobile
+let _lastTouchEnd = 0;
+document.addEventListener('touchend', function (event) {
+  const now = Date.now();
+  if (now - _lastTouchEnd <= 300) {
+    event.preventDefault();
+  }
+  _lastTouchEnd = now;
+}, { passive: false });
+document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+
+// ---- View switch ----
+function view(v){['view-login','view-bars','view-pos','view-admin'].forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(v==='bars'?'view-bars':v==='pos'?'view-pos':v==='admin'?'view-admin':'view-login').classList.remove('hidden'); }
+
+document.getElementById('btn-logout').onclick=()=>{SESSION={user:null,bar:null,cart:{}}; view('login'); location.reload();}
+document.getElementById('btn-admin').onclick=()=>{fillAdmin(); view('admin');}
+document.getElementById('btn-close-admin').onclick=()=>{view('bars');}
+
+document.getElementById('btn-back').onclick=()=>{SESSION.bar=null; SESSION.cart={}; view('bars'); renderBars();}
+
+// ---- Bars ----
+function renderBars(){const grid=document.getElementById('bars-grid'); grid.innerHTML=''; DB.bars.forEach(b=>{const d=document.createElement('div'); d.className='pbox'; d.innerHTML=`<div class="between"><b>${b.name}</b><button class="green" type="button">Seç</button></div>`; d.querySelector('button').onclick=()=>{SESSION.bar=b.id; enterPOS();}; grid.appendChild(d);}); renderBarsSummary(); const ozet=document.getElementById('bars-ozet'); if(ozet){ ozet.style.display = (SESSION.user && SESSION.user.role==='admin') ? '' : 'none'; }}
+
+function renderBarsSummary(){const div=document.getElementById('bars-summary'); const byBar={}; DB.sales.forEach(s=>{byBar[s.barId]=byBar[s.barId]||{count:0,total:0}; byBar[s.barId].count+=s.qty; byBar[s.barId].total+=s.qty*s.price;}); div.innerHTML=''; DB.bars.forEach(b=>{const o=byBar[b.id]||{count:0,total:0}; const p=document.createElement('div'); p.className='between'; p.style.margin='6px 0'; p.innerHTML=`<div><b>${b.name}</b> • <span class='muted'>${fmt.format(o.count)} adet</span></div><div><b>${fmt.format(o.total)}</b> ₺</div>`; div.appendChild(p);});}
+
+// ---- POS (grid) ----
+function enterPOS(){document.getElementById('pos-bar-name').textContent=getBar(SESSION.bar).name; SESSION.cart={}; renderPOSGrid(); renderSalesTable(); updateSaleTotal(); view('pos');}
+
+function renderPOSGrid(){const grid=document.getElementById('prods-grid'); grid.innerHTML=''; DB.products.forEach(p=>{const s=stockGet(SESSION.bar,p.id); const crit=(p.critical||0)>0 && s<=p.critical; const d=document.createElement('div'); d.className='pbox'; d.innerHTML=`<div class='between'><div class='pname'>${p.name}${crit?' <span class="warn">⚠</span>':''}</div><div class='muted'>${fmt.format(p.price)} ₺</div></div>
+      <div class='muted'>Stok: <b>${s}</b> ${p.critical?`• kritik: ${p.critical}`:''}</div>
+      <div class='qtybar'><button class='ghost minus' type='button'>−</button><div class='qty' id='q-${p.id}'>0</div><button class='ghost plus' type='button'>+</button></div>`;
+  d.querySelector('.minus').onclick=()=>{setQty(p.id, Math.max(0,getQty(p.id)-1));};
+  d.querySelector('.plus').onclick=()=>{setQty(p.id, getQty(p.id)+1);};
+  grid.appendChild(d);});}
+
+function getQty(pid){return SESSION.cart[pid]||0}
+function setQty(pid,val){SESSION.cart[pid]=val; const el=document.getElementById(`q-${pid}`); if(el) el.textContent=val; updateSaleTotal();}
+function updateSaleTotal(){let t=0; Object.entries(SESSION.cart).forEach(([pid,q])=>{if(q>0){const p=getProd(pid); t+=q*(p?p.price:0);}}); document.getElementById('sale-total').textContent=fmt.format(t);}
+
+document.getElementById('btn-clear').onclick=()=>{SESSION.cart={}; renderPOSGrid(); updateSaleTotal();}
+
+document.getElementById('btn-pay-cash').onclick=()=>commitSale('cash');
+document.getElementById('btn-pay-card').onclick=()=>commitSale('card');
+
+function commitSale(pay){ let any=false; for(const [pid,q] of Object.entries(SESSION.cart)){ if(q>0){ any=true; const p=getProd(pid); const cur=stockGet(SESSION.bar,pid); if(cur-q<0){ alert('Uyarı: '+p.name+' stok eksiye düşecek.'); } DB.sales.push({id:id(),ts:Date.now(),barId:SESSION.bar,productId:pid,qty:q,price:p.price,user:SESSION.user.name,pay}); stockAdd(SESSION.bar,pid,-q);} }
+  if(!any){alert('Adet seçilmedi.'); return;}
+  store.save(DB); renderSalesTable(); renderBarsSummary(); renderPOSGrid(); SESSION.cart={}; updateSaleTotal(); }
+
+function renderSalesTable(){
+  const isAdmin = SESSION.user && SESSION.user.role==='admin';
+  const theadRow = document.getElementById('sales-head-row');
+  theadRow.innerHTML = isAdmin ? '<th>Saat</th><th>Ürün</th><th>Adet</th><th>Birim</th><th>Toplam</th><th>Ödeme</th><th>Kullanıcı</th>' : '<th>Saat</th><th>Ürün</th><th>Adet</th><th>Ödeme</th><th>Kullanıcı</th>';
+  const tb=document.querySelector('#sales-table tbody'); tb.innerHTML='';
+  let total=0,count=0,cash=0,card=0;
+  let rows = DB.sales.filter(s=>s.barId===SESSION.bar).sort((a,b)=>b.ts-a.ts);
+  if(!isAdmin){ rows = rows.slice(0,5); }
+  rows.forEach(s=>{
+    const p=getProd(s.productId);
+    const line=s.qty*s.price;
+    if(isAdmin){ total+=line; count+=s.qty; if(s.pay==='cash') cash+=line; else card+=line; }
+    const tr=document.createElement('tr');
+    tr.innerHTML = isAdmin
+      ? `<td>${new Date(s.ts).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</td><td>${p?p.name:'?'}</td><td>${s.qty}</td><td>${fmt.format(s.price)}</td><td>${fmt.format(line)}</td><td>${s.pay==='cash'?'Nakit':'Kart'}</td><td>${s.user}</td>`
+      : `<td>${new Date(s.ts).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</td><td>${p?p.name:'?'}</td><td>${s.qty}</td><td>${s.pay==='cash'?'Nakit':'Kart'}</td><td>${s.user}</td>`;
+    tb.appendChild(tr);
+  });
+  const totalsEl = document.getElementById('pos-totals');
+  totalsEl.textContent = isAdmin ? `${fmt.format(count)} adet • ${fmt.format(total)} ₺ (Nakit: ${fmt.format(cash)} ₺ / Kart: ${fmt.format(card)} ₺)` : '';
+}
+
+// ---- Admin ----
+function fillAdmin(){
+  // === Bars ===
+  const bgrid=document.getElementById('bars-admin'); bgrid.innerHTML='';
+  DB.bars.forEach(b=>{
+    const card=document.createElement('div'); card.className='pbox';
+    card.innerHTML=`<div class='between'><b>${b.name}</b><button class='red del-bar' data-id='${b.id}' type='button'>Sil</button></div>`;
+    bgrid.appendChild(card);
+  });
+  bgrid.querySelectorAll('.del-bar').forEach(btn=>{
+    btn.addEventListener('click', ()=>{const id=btn.getAttribute('data-id'); if(confirm('Bar silinsin mi?')){
+      if(SESSION.bar===id){ SESSION.bar=null; view('bars'); }
+      DB.sales = DB.sales.filter(s=>s.barId!==id);
+      delete DB.stock[id];
+      DB.bars = DB.bars.filter(x=>x.id!==id);
+      store.save(DB);
+      fillAdmin();
+      renderBars();
+    }});
+  });
+
+  // === Products ===
+  const pgrid=document.getElementById('prods-admin'); pgrid.innerHTML='';
+  DB.products.forEach(p=>{
+    const card=document.createElement('div'); card.className='pbox';
+    card.innerHTML=`<div class='between'><div><b>${p.name}</b> • ${fmt.format(p.price)} ₺ <span class='pill'>kritik: ${p.critical||0}</span></div><button class='red del-prod' data-id='${p.id}' type='button'>Sil</button></div>`;
+    pgrid.appendChild(card);
+  });
+  pgrid.querySelectorAll('.del-prod').forEach(btn=>{
+    btn.addEventListener('click', ()=>{const id=btn.getAttribute('data-id'); if(confirm('Ürün silinsin mi? Satış kayıtları kalır.')){
+      DB.products = DB.products.filter(x=>x.id!==id);
+      Object.keys(DB.stock).forEach(bar=>{ if(DB.stock[bar] && DB.stock[bar][id]!=null) delete DB.stock[bar][id]; });
+      store.save(DB);
+      fillAdmin();
+      if(SESSION.bar) renderPOSGrid();
+    }});
+  });
+
+  // === Users ===
+  const ugrid=document.getElementById('users-admin'); ugrid.innerHTML='';
+  DB.users.forEach(u=>{
+    const card=document.createElement('div'); card.className='pbox';
+    card.innerHTML=`<div class='between'><div><b>${u.name}</b> • <span class='pill'>${u.role}</span> • PIN:${u.pin}</div>${u.name==='admin' ? '' : `<button class='red del-user' data-name='${u.name}' type='button'>Sil</button>`}</div>`;
+    ugrid.appendChild(card);
+  });
+  ugrid.querySelectorAll('.del-user').forEach(btn=>{
+    btn.addEventListener('click', ()=>{const name=btn.getAttribute('data-name'); if(confirm(name+' silinsin mi?')){
+      DB.users = DB.users.filter(x=>x.name!==name);
+      store.save(DB);
+      fillAdmin();
+      refreshLoginUsers();
+    }});
+  });
+
+  // === Selectors ===
+  const stkBar=document.getElementById('stk-bar'); const stkProd=document.getElementById('stk-prod'); const rptBar=document.getElementById('rpt-bar'); const rptUser=document.getElementById('rpt-user');
+  [stkBar,rptBar].forEach(sel=>{ sel.innerHTML='<option value="">(Hepsi)</option>'; DB.bars.forEach(b=>{const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; sel.appendChild(o);});});
+  stkProd.innerHTML=''; DB.products.forEach(p=>{const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; stkProd.appendChild(o);});
+  rptUser.innerHTML='<option value="">(hepsi)</option>'; DB.users.forEach(u=>{const o=document.createElement('option'); o.value=u.name; o.textContent=`${u.name} (${u.role})`; rptUser.appendChild(o);});
+  updateStkCurrent();
+
+  // === Populate for Ürün Satış Raporu & Stok Log ===
+  const prBar=document.getElementById('pr-bar');
+  if(prBar){ prBar.innerHTML='<option value="">(Hepsi)</option>'; DB.bars.forEach(b=>{const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; prBar.appendChild(o);});}
+  const slBar=document.getElementById('sl-bar');
+  if(slBar){ slBar.innerHTML='<option value="">(Hepsi)</option>'; DB.bars.forEach(b=>{const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; slBar.appendChild(o);});}
+  const slProd=document.getElementById('sl-prod');
+  if(slProd){ slProd.innerHTML='<option value="">(Hepsi)</option>'; DB.products.forEach(p=>{const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; slProd.appendChild(o);});}
+
+}
+
+document.getElementById('btn-add-bar').onclick=()=>{const name=document.getElementById('bar-name').value.trim(); if(!name) return; DB.bars.push({id:id(),name}); store.save(DB); document.getElementById('bar-name').value=''; fillAdmin(); renderBars(); }
+
+document.getElementById('btn-add-prod').onclick=()=>{const name=document.getElementById('prod-name').value.trim(); const price=Number(document.getElementById('prod-price').value||0); const critical=Number(document.getElementById('prod-critical').value||0); if(!name) return; const ex=DB.products.find(p=>p.name.toLowerCase()===name.toLowerCase()); if(ex){ex.price=price; ex.critical=critical;} else {DB.products.push({id:id(),name,price,critical});} store.save(DB); document.getElementById('prod-name').value=''; document.getElementById('prod-price').value=''; document.getElementById('prod-critical').value=''; fillAdmin(); if(SESSION.bar) renderPOSGrid(); }
+
+document.getElementById('btn-stk').onclick=()=>{
+  const barSel=document.getElementById('stk-bar');
+  const prod=document.getElementById('stk-prod').value;
+  const d=Number(document.getElementById('stk-delta').value||0);
+  if(!prod||!d) return;
+
+  const userName = (SESSION.user && SESSION.user.name) ? SESSION.user.name : 'admin';
+
+  if(barSel.value===''){
+    DB.bars.forEach(b=>{
+      stockAdd(b.id, prod, d);
+      if(!DB.stockLogs) DB.stockLogs = [];
+      DB.stockLogs.push({ id:id(), ts:Date.now(), barId:b.id, productId:prod, delta:d, user:userName });
+    });
+  } else {
+    stockAdd(barSel.value, prod, d);
+    if(!DB.stockLogs) DB.stockLogs = [];
+    DB.stockLogs.push({ id:id(), ts:Date.now(), barId:barSel.value, productId:prod, delta:d, user:userName });
+  }
+
+  store.save(DB);
+  document.getElementById('stk-delta').value='';
+  updateStkCurrent();
+  if(SESSION.bar) renderPOSGrid();
+}
+function updateStkCurrent(){const bar=document.getElementById('stk-bar').value||DB.bars[0]?.id; const prod=document.getElementById('stk-prod').value||DB.products[0]?.id; if(bar&&prod){ document.getElementById('stk-cur').textContent='Mevcut: '+(bar===''? '—' : stockGet(bar,prod)); }}
+['stk-bar','stk-prod'].forEach(idv=>{const el=document.getElementById(idv); el&& (el.onchange=updateStkCurrent)});
+
+// Users add
+document.getElementById('btn-add-user').onclick=()=>{const name=document.getElementById('usr-name').value.trim(); const pin=(document.getElementById('usr-pin').value||'').trim(); const role=document.getElementById('usr-role').value; if(!name||!pin) return; if(DB.users.some(u=>u.name.toLowerCase()===name.toLowerCase())){alert('Bu kullanıcı zaten var'); return;} DB.users.push({name,pin,role}); store.save(DB); document.getElementById('usr-name').value=''; document.getElementById('usr-pin').value=''; fillAdmin(); refreshLoginUsers(); }
+
+// Reports
+function runReport(){const bar=document.getElementById('rpt-bar').value; const user=document.getElementById('rpt-user').value; const from=document.getElementById('rpt-from').valueAsNumber||0; const to=document.getElementById('rpt-to').valueAsNumber||Date.now(); const rows=DB.sales.filter(s=> (bar? s.barId===bar:true) && (user? s.user===user:true) && s.ts>=from && s.ts<=to); const tb=document.querySelector('#rpt-table tbody'); tb.innerHTML=''; let total=0,count=0,cash=0,card=0; rows.sort((a,b)=>b.ts-a.ts).forEach(s=>{const p=getProd(s.productId); const b=getBar(s.barId); const line=s.qty*s.price; total+=line; count+=s.qty; if(s.pay==='cash') cash+=line; else card+=line; const tr=document.createElement('tr'); tr.innerHTML=`<td>${ts(s.ts)}</td><td>${b?b.name:'?'}</td><td>${p?p.name:'?'}</td><td>${s.qty}</td><td>${fmt.format(s.price)}</td><td>${fmt.format(line)}</td><td>${s.pay==='cash'?'Nakit':'Kart'}</td><td>${s.user}</td>`; tb.appendChild(tr);}); document.getElementById('rpt-summary').textContent=`${fmt.format(count)} adet • ${fmt.format(total)} ₺ (Nakit: ${fmt.format(cash)} ₺ / Kart: ${fmt.format(card)} ₺)`;}
+
+document.getElementById('btn-rpt').onclick=runReport;
+
+
+// Ürün Satış Raporu (bar + ürün bazında adet)
+function runProdReport(){
+  const bar=document.getElementById('pr-bar').value;
+  const from=document.getElementById('pr-from').valueAsNumber||0;
+  const to=document.getElementById('pr-to').valueAsNumber||Date.now();
+  const rows=DB.sales.filter(s=>(bar? s.barId===bar:true) && s.ts>=from && s.ts<=to);
+  const agg={};
+  let totalCount=0;
+  rows.forEach(s=>{
+    const key=(s.barId||'')+'|'+(s.productId||'');
+    agg[key]=(agg[key]||0)+Number(s.qty||0);
+    totalCount+=Number(s.qty||0);
+  });
+  const tb=document.querySelector('#pr-table tbody'); if(tb){ tb.innerHTML=''; }
+  Object.entries(agg).sort((a,b)=>b[1]-a[1]).forEach(([key,count])=>{
+    const [barId,prodId]=key.split('|');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${getBar(barId)?.name||'?'}</td><td>${getProd(prodId)?.name||'?'}</td><td>${fmt.format(count)}</td>`;
+    tb && tb.appendChild(tr);
+  });
+  const sum=document.getElementById('pr-summary'); if(sum){ sum.textContent=`${fmt.format(totalCount)} adet`; }
+}
+document.getElementById('btn-pr') && (document.getElementById('btn-pr').onclick=runProdReport);
+document.getElementById('btn-pr-csv') && (document.getElementById('btn-pr-csv').onclick=()=>{
+  const bar=document.getElementById('pr-bar').value;
+  const from=document.getElementById('pr-from').valueAsNumber||0;
+  const to=document.getElementById('pr-to').valueAsNumber||Date.now();
+  const rows=DB.sales.filter(s=>(bar? s.barId===bar:true) && s.ts>=from && s.ts<=to);
+  const agg={};
+  rows.forEach(s=>{
+    const key=(s.barId||'')+'|'+(s.productId||'');
+    agg[key]=(agg[key]||0)+Number(s.qty||0);
+  });
+  const header=['from','to','bar','product','count'];
+  const lines=[header.join(',')];
+  Object.entries(agg).forEach(([key,count])=>{
+    const [barId,prodId]=key.split('|');
+    const line=[
+      new Date(from||0).toISOString(),
+      new Date(to||Date.now()).toISOString(),
+      (getBar(barId)?.name||'?'),
+      (getProd(prodId)?.name||'?'),
+      count
+    ].join(',');
+    lines.push(line);
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='urun_satis_raporu.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Stok Yönetim Logu (kullanıcı + saat)
+function runStockLog(){
+  const bar=document.getElementById('sl-bar').value;
+  const prod=document.getElementById('sl-prod').value;
+  const from=document.getElementById('sl-from').valueAsNumber||0;
+  const to=document.getElementById('sl-to').valueAsNumber||Date.now();
+  const logs=(DB.stockLogs||[]).filter(l=>(bar? l.barId===bar:true) && (prod? l.productId===prod:true) && l.ts>=from && l.ts<=to);
+  logs.sort((a,b)=>b.ts-a.ts);
+  const tb=document.querySelector('#sl-table tbody'); if(tb){ tb.innerHTML=''; }
+  logs.forEach(l=>{
+    const tr=document.createElement('tr');
+    const deltaText = (l.delta>0? '+' : '') + fmt.format(l.delta||0);
+    tr.innerHTML=`<td>${ts(l.ts)}</td><td>${getBar(l.barId)?.name||'?'}</td><td>${getProd(l.productId)?.name||'?'}</td><td>${deltaText}</td><td>${l.user||'?'}</td>`;
+    tb && tb.appendChild(tr);
+  });
+  const sum=document.getElementById('sl-summary'); if(sum){ sum.textContent=`Kayıt: ${logs.length}`; }
+}
+document.getElementById('btn-sl') && (document.getElementById('btn-sl').onclick=runStockLog);
+
+// Z report
+function runZ(){const input=document.getElementById('z-date'); if(!input.value) input.value=new Date().toISOString().slice(0,10); const d=input.value; const start=new Date(d+"T00:00:00").getTime(); const end=new Date(d+"T23:59:59").getTime(); const map={}; DB.bars.forEach(b=>map[b.id]={bar:b.name,count:0,total:0,cash:0,card:0}); DB.sales.filter(s=>s.ts>=start && s.ts<=end).forEach(s=>{const m=map[s.barId]||(map[s.barId]={bar:getBar(s.barId)?.name||'?',count:0,total:0,cash:0,card:0}); const line=s.qty*s.price; m.count+=s.qty; m.total+=line; if(s.pay==='cash') m.cash+=line; else m.card+=line;}); const tb=document.querySelector('#z-table tbody'); tb.innerHTML=''; let tC=0,tT=0,tN=0,tK=0; Object.values(map).forEach(m=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${m.bar}</td><td>${fmt.format(m.total)}</td><td>${fmt.format(m.cash)}</td><td>${fmt.format(m.card)}</td>`; tb.appendChild(tr); tC+=m.count; tT+=m.total; tN+=m.cash; tK+=m.card;}); document.getElementById('z-summary').textContent=`${d} • ${fmt.format(tC)} adet • ${fmt.format(tT)} ₺ (Nakit: ${fmt.format(tN)} ₺ / Kart: ${fmt.format(tK)} ₺)`;}
+
+document.getElementById('btn-z').onclick=runZ;
+document.getElementById('btn-z-csv').onclick=()=>{const d=document.getElementById('z-date').value||new Date().toISOString().slice(0,10); const start=new Date(d+"T00:00:00").getTime(); const end=new Date(d+"T23:59:59").getTime(); const header=['date','bar','total','cash','card']; const lines=[header.join(',')]; const map={}; DB.bars.forEach(b=>map[b.id]={bar:b.name,count:0,total:0,cash:0,card:0}); DB.sales.filter(s=>s.ts>=start && s.ts<=end).forEach(s=>{const m=map[s.barId]||(map[s.barId]={bar:getBar(s.barId)?.name||'?',count:0,total:0,cash:0,card:0}); const line=s.qty*s.price; m.count+=s.qty; m.total+=line; if(s.pay==='cash') m.cash+=line; else m.card+=line;}); Object.values(map).forEach(m=>{lines.push([d,m.bar,m.total,m.cash,m.card].join(','));}); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`z_${d}.csv`; a.click(); URL.revokeObjectURL(url);} 
+
+// Admin Reset (garantili)
+const btnReset=document.getElementById('btn-reset-db');
+btnReset.onclick=()=>{ if(confirm('Tüm veriler sıfırlansın mı?')){
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  DB = store.seed();
+  store.save(DB);
+  SESSION={user:SESSION.user,bar:null,cart:{}}; // kullanıcıyı tut, barı sıfırla
+  refreshLoginUsers();
+  fillAdmin();
+  renderBars();
+  alert('Veriler sıfırlandı.');
+}}
+
+
+// -- Ensure Reset data card is the very bottom in Admin view
+try {
+  const resetBtn = document.getElementById('btn-reset-db');
+  if (resetBtn) {
+    const maintCard = resetBtn.closest('.card');
+    const adminView = document.getElementById('view-admin');
+    if (maintCard && adminView) adminView.appendChild(maintCard);
+  }
+} catch(e) {}
+
+// init
+view('login');
+</script>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+<script>
+// ===== Real-time Sync (Firestore) =====
+(function(){
+  const FIRE_KEY = 'BF_FIREBASE_CFG';
+  const TENANT_KEY = 'BF_TENANT_ID';
+  let _cloud = { enabled:false, app:null, db:null, auth:null, doc:null, unsub:null, saving:false };
+
+  function setStatus(text, ok) {
+    const el = document.getElementById('cloud-status');
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle('ok', !!ok);
+    el.classList.toggle('warn', !ok);
+  }
+
+  function reRenderAll(){
+    try{
+      if (typeof refreshLoginUsers==='function') refreshLoginUsers();
+      if (typeof renderBars==='function') renderBars();
+      if (typeof renderBarsSummary==='function') renderBarsSummary();
+      if (typeof renderSalesTable==='function') renderSalesTable();
+      if (window.SESSION && SESSION.bar && typeof renderPOSGrid==='function') renderPOSGrid(SESSION.bar);
+    }catch(e){ console.warn('rerender failed', e); }
+  }
+
+  function initCloudFromStorage(){
+    let cfgRaw = localStorage.getItem(FIRE_KEY);
+    let tenant = localStorage.getItem(TENANT_KEY) || 'bobo-franco';
+    const tc = document.getElementById('tenant-id'); if (tc) tc.value = tenant;
+    if (!cfgRaw) { setStatus('Kapalı', false); return false; }
+    try{
+      const cfg = JSON.parse(cfgRaw);
+      if (!cfg || !cfg.projectId) { setStatus('Eksik config', false); return false; }
+      firebase.initializeApp(cfg);
+      const db = firebase.firestore();
+      const auth = firebase.auth();
+      _cloud = { enabled:true, app:firebase.app(), db, auth, doc:null, unsub:_cloud.unsub, saving:false };
+      setStatus('Açık', true);
+      auth.signInAnonymously().catch(console.error);
+      const tenantId = tenant || 'bobo-franco';
+      const docRef = db.collection('tenants').doc(tenantId).collection('app').doc('appState');
+      _cloud.doc = docRef;
+
+      if (_cloud.unsub) { try{ _cloud.unsub(); }catch(e){} }
+      _cloud.unsub = docRef.onSnapshot((snap)=>{
+        const exists = snap.exists;
+        if (!exists) { 
+          // push current local DB once as seed
+          try { docRef.set(window.DB || {}, { merge:false }); } catch(e){ console.error(e); }
+          return;
+        }
+        try {
+          const state = snap.data();
+          // prevent write-back loop
+          _cloud.saving = true;
+          if (state) {
+            window.DB = state;
+            // also keep localStorage for offline
+            try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+            reRenderAll();
+          }
+        } finally {
+          setTimeout(()=>{ _cloud.saving = false; }, 50);
+        }
+      });
+
+      // patch store.save to also write to cloud
+      if (window.store && typeof store.save === 'function'){
+        const orig = store.save.bind(store);
+        store.save = function(s){
+          const res = orig(s);
+          if (_cloud.enabled && _cloud.doc && !_cloud.saving){
+            try { _cloud.doc.set(s, { merge:false }); } catch(e){ console.error(e); }
+          }
+          return res;
+        }
+      }
+      return true;
+    }catch(e){
+      console.error('initCloudFromStorage error', e);
+      setStatus('Hata', false);
+      return false;
+    }
+  }
+
+  // Buttons
+  document.addEventListener('DOMContentLoaded', function(){
+    const cfgEl = document.getElementById('fb-config');
+    const tEl   = document.getElementById('tenant-id');
+    const enBtn = document.getElementById('btn-cloud-enable');
+    const disBtn= document.getElementById('btn-cloud-disable');
+    if (cfgEl && enBtn){
+      
+enBtn.onclick = () => {
+  try{
+    const tenant = (tEl && tEl.value.trim()) || 'bobo-franco';
+    let raw = (cfgEl && cfgEl.value.trim()) || '';
+    if (!raw) throw new Error('Boş config');
+
+    // 1) Önce doğrudan JSON dene
+    let cfg = null;
+    try { cfg = JSON.parse(raw); } catch(_){}
+
+    // 2) JSON değilse, "const firebaseConfig = { ... }" gibi bir JS kodundan ayıkla
+    if (!cfg) {
+      // İlk { ile son } arasını al
+      const start = raw.indexOf('{');
+      const end   = raw.lastIndexOf('}');
+      if (start >= 0 && end > start) {
+        const objText = raw.slice(start, end + 1);
+        try {
+          // Güvenli değil ama sadece yerelde kullanıyoruz: JS object parse
+          // eslint-disable-next-line no-new-func
+          cfg = (new Function('return (' + objText + ');'))();
+        } catch(e){}
+      }
+    }
+
+    if (!cfg || !cfg.projectId) {
+      alert('Config okunamadı. Lütfen "Project settings → Web app → Firebase config" içeriğini yapıştırın.');
+      return;
+    }
+
+    localStorage.setItem(FIRE_KEY, JSON.stringify(cfg));
+    localStorage.setItem(TENANT_KEY, tenant);
+    if (initCloudFromStorage()) {
+      setStatus('Açık', true);
+      alert('Bulut senkron etkin! Tüm kullanıcılar aynı anda veri görecek.');
+    } else {
+      alert('Beklenmeyen bir hata oluştu (initCloudFromStorage).');
+    }
+  }catch(e){
+    alert('Geçersiz içerik. Hata: ' + (e && e.message ? e.message : e));
+  }
+};
+
+    }
+    if (disBtn){
+      disBtn.onclick = () => {
+        localStorage.removeItem(FIRE_KEY);
+        setStatus('Kapalı', false);
+        alert('Bulut senkron devre dışı bırakıldı.');
+      };
+    }
+    
+// Auto-preload Firebase config for your project
+try {
+  localStorage.setItem('BF_FIREBASE_CFG', JSON.stringify({'apiKey': 'AIzaSyBR4c5Y4Aa-7blbfP7aVKYqPnNz1k0ih58', 'authDomain': 'bobo-catering.firebaseapp.com', 'projectId': 'bobo-catering', 'storageBucket': 'bobo-catering.firebasestorage.app', 'messagingSenderId': '183002410824', 'appId': '1:183002410824:web:e867eb636ef72f3b494d7d', 'measurementId': 'G-35WG4J7V6Q'}));
+  localStorage.setItem('BF_TENANT_ID', 'bobo-franco');
+} catch(e) { console.warn(e); }
+
+    // Load stored config if any
+    initCloudFromStorage();
+  });
+})();
+</script>
+
+</body>
+</html>
